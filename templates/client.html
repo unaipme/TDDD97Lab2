@@ -1,0 +1,177 @@
+<html>
+	<head>
+		<title>Twidder</title>
+		<link href="{{url_for('static', filename='client.css')}}" type="text/css" rel="stylesheet" />
+		<!--<script src="client.js" type="text/javascript"></script>-->
+	</head>
+    <body>
+    {% if login == False %}
+        <center>
+            <div id="Welcome">
+                <div id="LogoSlogan" class="container">
+                    <img src="{{url_for('static', filename='wimage.png')}}">
+                </div>
+                <div id="Login" class="container">
+                    <form id="LoginForm" onSubmit="return signIn()">
+                        <table>
+                            <tr>
+                                <td><label for="LoginEmail">Email</label></td>
+                                <td><input required type="email" name="Email" id="LoginEmail"/></td>
+                            </tr>
+                            <tr>
+                                <td><label for="LoginPassword">Password</label></td>
+                                <td><input required type="password" name="Password" id="LoginPassword" /></td>
+                            </tr>
+                            <tr>
+                                <!--<td colspan="2"><input type="submit" value="Login" /></td>-->
+                                <td colspan="2"><button type="submit">Login</button></td>
+                            </tr>
+                        </table>
+                    </form>
+                </div>
+                <div id="SignUp" class="container">
+                    <h3>Sign up here</h3>
+                    <form id="SignUpForm" onSubmit="return (passwordValidation('Password', 'RepeatPSW') && signUp())">
+                        <table>
+                            <tr>
+                                <td><label for="FirstName">First name</label></td>
+                                <td><input required type="text" name="FirstName" id="FirstName" /></td>
+                            </tr>
+                            <tr>
+                                <td><label for="FamilyName">Family name</label></td>
+                                <td><input required type="text" name="FamilyName" id="FamilyName" /></td>
+                            </tr>
+                            <tr>
+                                <td><label for="Gender">Gender</label></td>
+                                <td>
+                                    <select name="Gender" id="Gender">
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><label for="City">City</label></td>
+                                <td><input required type="text" name="City" id="City" /></td>
+                            </tr><tr>
+                                <td><label for="Country">Country</label></td>
+                                <td><input required type="text" name="Country" id="Country" /></td>
+                            </tr>
+                            <tr>
+                                <td><label for="Email">Email</label></td>
+                                <td><input required type="email" name="Email" id="Email" /></td>
+                            </tr>
+                            <tr>
+                                <td><label for="Password">Password</label></td>
+                                <td><input required type="password" name="Password" id="Password" /></td>
+                            </tr>
+                            <tr>
+                                <td><label for="RepeatPSW">Repeat PSW</label></td>
+                                <td><input required type="password" name="RepeatPSW" id="RepeatPSW" /></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2"><button type="submit">Sign Up</button></td>
+                            </tr>
+                        </table>
+                    </form>
+                </div>
+            </div>
+            <div id="ErrorDisplay" class="container display"></div>
+            <div id="SuccessDisplay" class="container display"></div>
+        </center>
+    {% else %}
+        <center>
+            <div id="TabContainer">
+                <div id="AccountTab" class="tab selected" onClick="tabClick(this.id)">Account</div>
+                <div id="HomeTab" class="tab" onClick="tabClick(this.id)">Home</div>
+                <div id="BrowseTab" class="tab" onClick="tabClick(this.id)">Browse</div>
+            </div>
+            <div id="PanelContainer">
+                <div id="AccountPanel" class="panel shown">
+                    <h3>Change password</h3>
+                    <form id="NewPasswordForm" onSubmit="return (changePassword() && passwordValidation('NewPassword', 'ConfirmPassword'))">
+                        <table class="padded">
+                            <tr>
+                                <td>Current password:</td>
+                                <td><input required type="password" name="CurrentPassword" id="CurrentPassword" /></td>
+                                <td colspan="2">&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td>New password:</td>
+                                <td><input required type="password" name="NewPassword" id="NewPassword" /></td>
+                                <td>Confirm password:</td>
+                                <td><input required type="password" name="ConfirmPassword" id="ConfirmPassword" /></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4"><button type="submit">Save changes</button></td>
+                            </tr>
+                        </table>
+                    </form>
+                    <hr />
+                    <form id="SignOutForm" onSubmit="return signOut()">
+                        <button type="submit">Sign out</button>
+                    </form>
+                </div>
+                <div id="HomePanel" class="panel">
+                    <table id="UserInfoTable" class="padded">
+                        <tr>
+                            <td><b>Name:</b> <span id="FirstNameS"></span> <span id="FamilyNameS"></span></td>
+                            <td><b>Gender:</b> <span id="GenderS"></span></td>
+                        </tr>
+                        <tr>
+                            <td><b>City:</b> <span id="CityS"></span></td>
+                            <td><b>Country:</b> <span id="CountryS"></span></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"><b>Email:</b> <span id="EmailS"></span></td>
+                        </tr>
+                    </table>
+                    <hr />
+                    <table>
+                        <tr>
+                            <td><textarea rows="4" cols="80" maxlength="140" placeholder="Write your post here" id="MessageContent"></textarea></td>
+                        </tr>
+                        <tr>
+                            <td><button onClick="postOnWall(loggedUser)">Post</button></td>
+                        </tr>
+                    </table>
+                    <hr />
+                    <div id="PostShowcase" class="postshowcase"></div>
+                    <button onClick="refreshMessageWall()">Refresh wall</button>
+                </div>
+                <div id="BrowsePanel" class="panel">
+                    <input type="email" name="SearchTerm" id="SearchTerm" /> <button id="SearchButton" onClick="searchUser()">Load user</button>
+                    <hr />
+                    <table id="OUserInfoTable" class="padded fixedsizetable">
+                        <tr>
+                            <td><b>Name:</b> <span id="OFirstNameS"></span> <span id="OFamilyNameS"></span></td>
+                            <td><b>Gender:</b> <span id="OGenderS"></span></td>
+                        </tr>
+                        <tr>
+                            <td><b>City:</b> <span id="OCityS"></span></td>
+                            <td><b>Country:</b> <span id="OCountryS"></span></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"><b>Email:</b> <span id="OEmailS"></span></td>
+                        </tr>
+                    </table>
+                    <hr />
+                    <table>
+                        <tr>
+                            <td><textarea rows="4" cols="80" maxlength="140" placeholder="Write your post here" id="OMessageContent"></textarea></td>
+                        </tr>
+                        <tr>
+                            <td><button onClick="postOnWall(browseUser, true)">Post</button></td>
+                        </tr>
+                    </table>
+                    <hr />
+                    <div id="OPostShowcase" class="postshowcase"></div>
+                    <button onClick="refreshMessageWall(true, browseUser)">Refresh wall</button>
+                </div>
+            </div>
+            <div id="ErrorDisplay" class="container display"></div>
+            <div id="SuccessDisplay" class="container display"></div>
+        </center>
+    {% endif %}
+    </body>
+</html>

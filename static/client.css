@@ -1,0 +1,187 @@
+/*
+	Styles applied to tags
+*/
+
+body {
+	background: #01A9DB;
+}
+
+select {
+	width: 100%;
+}
+
+input[type=submit], button[type=submit] {
+	float: right;
+}
+
+form {
+	margin:0;
+}
+
+h3 {
+	margin:9.5px;
+}
+
+textarea {
+	resize:none;
+}
+
+/*
+	Styles applied to IDs
+*/
+
+#Welcome {
+	margin-top: 100px;
+	margin-bottom: 25px;
+	box-sizing: content-box;
+	width: 600px;
+	height: 400px;
+}
+
+#LogoSlogan {
+	width: 340px;
+	height: 100%;
+	float: left;
+}
+
+#Login {
+	width: 250px;
+	float: right;
+	margin-bottom:10px;
+}
+
+#SignUp {
+	width: 250px;
+	float: right;
+}
+
+#ErrorDisplay {
+	color:red;
+}
+
+#SuccessDisplay {
+	color:green;
+}
+
+#PanelContainer {
+	top: 100px;
+	width: 600px;
+	height: 400px;
+	background: white;
+	border: 1px solid black;
+}
+
+#TabContainer {
+	margin-top: 60px;
+	width: 602px;
+	height: 31px;
+	text-align:left;
+}
+
+#LogOutForm {
+	position:absolute;
+	top: 0;
+	left: 0;
+	padding: 10px;
+	box-sizing: content-box;
+}
+
+#UserInfoTable {
+	width: 100%;
+}
+
+#PostShowcase {
+	height: 125px;
+}
+
+#OPostShowcase {
+	height: 86px;
+}
+
+/*
+	Styles applied to classes
+*/
+
+.postshowcase {
+	padding: 5px;
+	overflow-y: auto;
+	margin-bottom:5px;
+	border: 1px solid rgb(169,169,169);
+}
+
+.tab {
+	height: 20px;
+	width: auto;
+	padding: 5px;
+	padding-left: 10px;
+	padding-right: 10px;
+	border: 1px solid black;
+	box-sizing: content-box;
+	display: inline-block;
+	cursor: pointer;
+	background-color:white;
+}
+
+.selected {
+	border-bottom: 1px solid white;
+}
+
+.panel {
+	display:none;
+	position:relative;
+	width:100%;
+	height:100%;
+	padding:10px;
+	box-sizing: border-box;
+	text-align:left;
+}
+
+.shown {
+	display:block;
+}
+
+.container {
+	border: 1px solid black;
+	background-color: white;
+}
+
+.display {
+	display:none;
+	padding:5px;
+	text-align:center;
+	font-weight:bold;
+	font-size:18px;
+}
+
+.UserPost {
+	margin-top:3px;
+	margin-bottom:3px;
+}
+
+.UserPost:first-child {
+	margin-top:0;
+}
+
+.UserPost:last-child {
+	margin-bottom:0;
+}
+
+.PosterName {
+	color:red;
+	font-weight:bold;
+}
+
+.MessageBody {
+}
+
+.padded td {
+	padding:3px;
+}
+
+.fixedsizetable td {
+	width:50%;
+}
+
+.fixedsizetable {
+	width:100%;
+}
