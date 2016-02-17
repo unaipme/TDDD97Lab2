@@ -49,3 +49,5 @@ Temporary Items
 #Custom by Unai
 *.exe
 .idea/
+*.pyc
+twidder.db

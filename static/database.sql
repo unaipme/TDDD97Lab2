@@ -5,9 +5,11 @@ CREATE TABLE 'Genders' (
 );
 
 INSERT INTO 'Genders' (GenderID, Name)
-VALUES 		(0, 'Unspecified'),
-			(1, 'Male'),
-			(2, 'Female');
+VALUES 		(0, 'Unspecified');
+INSERT INTO 'Genders' (GenderID, Name)
+VALUES		(1, 'Male');
+INSERT INTO 'Genders' (GenderID, Name)
+VALUES		(2, 'Female');
 
 CREATE TABLE 'Users' (
 	UserID integer primary key,
@@ -20,10 +22,6 @@ CREATE TABLE 'Users' (
 	Country text not null,
 	foreign key (Gender) references Genders (GenderID)
 );
-
-INSERT INTO 'Users'
-			(Username, Password, FirstName, FamilyName, Gender, City, Country)
-VALUES		('Test', 'qwerty', 'Unai', 'Perez', 1, 'Ordizia', 'Euskal Herria');
 
 CREATE TABLE 'Tokens' (
 	Token text,

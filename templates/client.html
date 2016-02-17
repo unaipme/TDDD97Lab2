@@ -12,7 +12,7 @@
                     <img src="{{url_for('static', filename='wimage.png')}}">
                 </div>
                 <div id="Login" class="container">
-                    <form id="LoginForm" onSubmit="return signIn()">
+                    <form id="LoginForm" method="post">
                         <table>
                             <tr>
                                 <td><label for="LoginEmail">Email</label></td>
@@ -27,11 +27,12 @@
                                 <td colspan="2"><button type="submit">Login</button></td>
                             </tr>
                         </table>
+                        <input type="hidden" name="LoggingIn" value="1" />
                     </form>
                 </div>
                 <div id="SignUp" class="container">
                     <h3>Sign up here</h3>
-                    <form id="SignUpForm" onSubmit="return (passwordValidation('Password', 'RepeatPSW') && signUp())">
+                    <form id="SignUpForm" method="post" action="/signup">
                         <table>
                             <tr>
                                 <td><label for="FirstName">First name</label></td>
@@ -45,8 +46,8 @@
                                 <td><label for="Gender">Gender</label></td>
                                 <td>
                                     <select name="Gender" id="Gender">
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
+                                        <option value="1">Male</option>
+                                        <option value="2">Female</option>
                                     </select>
                                 </td>
                             </tr>
@@ -73,6 +74,7 @@
                                 <td colspan="2"><button type="submit">Sign Up</button></td>
                             </tr>
                         </table>
+                        <input type="hidden" name="SigningIn" value="1" />
                     </form>
                 </div>
             </div>
