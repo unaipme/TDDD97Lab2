@@ -12,7 +12,7 @@
                     <img src="{{url_for('static', filename='wimage.png')}}">
                 </div>
                 <div id="Login" class="container">
-                    <form id="LoginForm" method="post">
+                    <form id="LoginForm" method="post" action="/login">
                         <table>
                             <tr>
                                 <td><label for="LoginEmail">Email</label></td>
@@ -82,14 +82,15 @@
     {% else %}
         <center>
             <div id="TabContainer">
-                <div id="AccountTab" class="tab selected" onClick="tabClick(this.id)">Account</div>
-                <div id="HomeTab" class="tab" onClick="tabClick(this.id)">Home</div>
-                <div id="BrowseTab" class="tab" onClick="tabClick(this.id)">Browse</div>
+                <a href="/account"><div id="AccountTab" class="tab {% if account %}selected{% endif %}">Account</div></a>
+                <a href="/home"><div id="HomeTab" class="tab {% if home %}selected{% endif %}">Home</div></a>
+                <a href="/browse"><div id="BrowseTab" class="tab {% if browse %}selected{% endif %}">Browse</div></a>
             </div>
             <div id="PanelContainer">
+                {% if account %}
                 <div id="AccountPanel" class="panel shown">
                     <h3>Change password</h3>
-                    <form id="NewPasswordForm" onSubmit="return (changePassword() && passwordValidation('NewPassword', 'ConfirmPassword'))">
+                    <form id="NewPasswordForm" method="post" onSubmit="return (changePassword() && passwordValidation('NewPassword', 'ConfirmPassword'))">
                         <table class="padded">
                             <tr>
                                 <td>Current password:</td>
@@ -108,10 +109,12 @@
                         </table>
                     </form>
                     <hr />
-                    <form id="SignOutForm" onSubmit="return signOut()">
+                    <form method="post" id="SignOutForm" onSubmit="return signOut()">
                         <button type="submit">Sign out</button>
                     </form>
                 </div>
+                {% endif %}
+                {% if home %}
                 <div id="HomePanel" class="panel">
                     <table id="UserInfoTable" class="padded">
                         <tr>
@@ -139,6 +142,8 @@
                     <div id="PostShowcase" class="postshowcase"></div>
                     <button onClick="refreshMessageWall()">Refresh wall</button>
                 </div>
+                {% endif %}
+                {% if browse %}
                 <div id="BrowsePanel" class="panel">
                     <input type="email" name="SearchTerm" id="SearchTerm" /> <button id="SearchButton" onClick="searchUser()">Load user</button>
                     <hr />
@@ -168,14 +173,14 @@
                     <div id="OPostShowcase" class="postshowcase"></div>
                     <button onClick="refreshMessageWall(true, browseUser)">Refresh wall</button>
                 </div>
+                {% endif %}
             </div>
         </center>
         {% endif %}
-        {% if error == True %}
+        {% if success == False %}
         <div id="ErrorDisplay" class="container display">{{msg}}</div>
         <script>setTimeout(function() {document.getElementById("ErrorDisplay").style.display = "none";}, 7000);</script>
-        {% endif %}
-        {% if success == True %}
+        {% elif success == True %}
         <div id="SuccessDisplay" class="container display">{{msg}}</div>
         <script>setTimeout(function() {document.getElementById("SuccessDisplay").style.display = "none";}, 7000);</script>
         {% endif %}

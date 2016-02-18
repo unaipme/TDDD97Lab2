@@ -46,7 +46,7 @@ class DatabaseHelper(object):
             c.commit()
         else:
             printc("Everything's ready\n")
-        self.__close()
+        # self.__close()
 
     def __get_db(self):
         db = getattr(g, "db", None)
@@ -58,38 +58,56 @@ class DatabaseHelper(object):
         self.__get_db().close()
 
     def select(self, collist, tablename, more=""):
-        '''
-        sqlst = "SELECT "
-        for i in range(0, len(collist)):
-            sqlst += collist[i]
-            if i < len(collist) - 1:
-                sqlst += ","
-            sqlst += " "
-        sqlst += "FROM " + tablename + " "
-        printc(sqlst + more)
-        '''
-        sqlst = "SELECT " + str(collist).lstrip("(").rstrip(")") + " FROM " + tablename
-        if more != "":
-            sqlst += " " + more
-        printc(sqlst)
+        c = self.__get_db()
+        respData = ("success", "message", "errno", "data")
+        try:
+            sqlst = "SELECT " + str(collist).lstrip("(").rstrip(")") + " FROM " + tablename
+            if more != "":
+                sqlst += " " + more
+            printc(sqlst)
+            data = c.execute(sqlst).fetchall()
+        except IntegrityError:
+            c.rollback()
+            resp = createjson(respData, (False, ERROR_MSG[ErrNo.EX_DATA_ERR], ErrNo.EX_DATA_ERR, None))
+        except OperationalError:
+            c.rollback()
+            resp = createjson(respData, (False, ERROR_MSG[ErrNo.QUERY_ERR], ErrNo.QUERY_ERR, None))
+        except Exception:
+            c.rollback()
+            resp = createjson(respData, (False, ERROR_MSG[ErrNo.UNKNOWN], ErrNo.UNKNOWN, None))
+        else:
+            c.commit()
+            resp = createjson(respData, (True, ERROR_MSG[ErrNo.NO_ERROR], ErrNo.NO_ERROR, data))
+        finally:
+            # self.__close()
+            pass
+        return resp
 
     def insert(self, tablename, collist, valuelist):
         c = self.__get_db()
+        respData = ("success", "message", "errno")
         try:
             sqlst = "INSERT INTO " + tablename + " " + str(collist) + " VALUES " + str(valuelist)
             c.execute(sqlst)
         except IntegrityError:
             c.rollback()
-            resp = createjson(("success", "message", "errno"), (False, ERROR_MSG[ErrNo.EX_DATA_ERR], ErrNo.EX_DATA_ERR))
+            resp = createjson(respData, (False, ERROR_MSG[ErrNo.EX_DATA_ERR], ErrNo.EX_DATA_ERR))
         except OperationalError:
             c.rollback()
-            resp = createjson(("success", "message", "errno"), (False, ERROR_MSG[ErrNo.QUERY_ERR], ErrNo.QUERY_ERR))
+            resp = createjson(respData, (False, ERROR_MSG[ErrNo.QUERY_ERR], ErrNo.QUERY_ERR))
         except Exception:
             c.rollback()
-            resp = createjson(("success", "message", "errno"), (False, ERROR_MSG[ErrNo.UNKNOWN], ErrNo.UNKNOWN))
+            resp = createjson(respData, (False, ERROR_MSG[ErrNo.UNKNOWN], ErrNo.UNKNOWN))
         else:
             c.commit()
-            resp = createjson(("success", "message", "errno"), (True, ERROR_MSG[ErrNo.NO_ERROR], ErrNo.NO_ERROR))
+            resp = createjson(respData, (True, ERROR_MSG[ErrNo.NO_ERROR], ErrNo.NO_ERROR))
         finally:
-            self.__close()
+            # self.__close()
+            pass
         return resp
+
+    def clean_expired_tokens(self):
+        c = self.__get_db()
+        c.execute("DELETE FROM Tokens WHERE ExpireDate<=datetime('now')")
+        c.commit()
+        # self.__close()

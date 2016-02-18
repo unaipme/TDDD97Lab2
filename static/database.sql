@@ -26,6 +26,7 @@ CREATE TABLE 'Users' (
 CREATE TABLE 'Tokens' (
 	Token text,
 	UserID integer,
+	ExpireDate text not null,
 	primary key (Token, UserID),
 	foreign key (UserID) references Users (UserID)
 );
