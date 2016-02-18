@@ -78,8 +78,6 @@
                     </form>
                 </div>
             </div>
-            <div id="ErrorDisplay" class="container display"></div>
-            <div id="SuccessDisplay" class="container display"></div>
         </center>
     {% else %}
         <center>
@@ -171,9 +169,15 @@
                     <button onClick="refreshMessageWall(true, browseUser)">Refresh wall</button>
                 </div>
             </div>
-            <div id="ErrorDisplay" class="container display"></div>
-            <div id="SuccessDisplay" class="container display"></div>
         </center>
-    {% endif %}
+        {% endif %}
+        {% if error == True %}
+        <div id="ErrorDisplay" class="container display">{{msg}}</div>
+        <script>setTimeout(function() {document.getElementById("ErrorDisplay").style.display = "none";}, 7000);</script>
+        {% endif %}
+        {% if success == True %}
+        <div id="SuccessDisplay" class="container display">{{msg}}</div>
+        <script>setTimeout(function() {document.getElementById("SuccessDisplay").style.display = "none";}, 7000);</script>
+        {% endif %}
     </body>
 </html>
