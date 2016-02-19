@@ -23,7 +23,6 @@
                                 <td><input required type="password" name="Password" id="LoginPassword" /></td>
                             </tr>
                             <tr>
-                                <!--<td colspan="2"><input type="submit" value="Login" /></td>-->
                                 <td colspan="2"><button type="submit">Login</button></td>
                             </tr>
                         </table>
@@ -82,15 +81,16 @@
     {% else %}
         <center>
             <div id="TabContainer">
-                <a href="/account"><div id="AccountTab" class="tab {% if account %}selected{% endif %}">Account</div></a>
-                <a href="/home"><div id="HomeTab" class="tab {% if home %}selected{% endif %}">Home</div></a>
-                <a href="/browse"><div id="BrowseTab" class="tab {% if browse %}selected{% endif %}">Browse</div></a>
+                <a href="/account/{{token}}"><div id="AccountTab" class="tab {% if account %}selected{% endif %}">Account</div></a>
+                <a href="/home/{{token}}"><div id="HomeTab" class="tab {% if home %}selected{% endif %}">Home</div></a>
+                <a href="/browse/{{token}}"><div id="BrowseTab" class="tab {% if browse %}selected{% endif %}">Browse</div></a>
             </div>
             <div id="PanelContainer">
                 {% if account %}
                 <div id="AccountPanel" class="panel shown">
                     <h3>Change password</h3>
-                    <form id="NewPasswordForm" method="post" onSubmit="return (changePassword() && passwordValidation('NewPassword', 'ConfirmPassword'))">
+                    <form id="NewPasswordForm" method="post" action="/account/{{token}}">
+                        <input type="hidden" name="Token" value="{{token}}" />
                         <table class="padded">
                             <tr>
                                 <td>Current password:</td>
@@ -109,7 +109,7 @@
                         </table>
                     </form>
                     <hr />
-                    <form method="post" id="SignOutForm" onSubmit="return signOut()">
+                    <form method="post" action="/signout/{{token}}">
                         <button type="submit">Sign out</button>
                     </form>
                 </div>

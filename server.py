@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect
-from database_helper import DatabaseHelper, ErrNo
+from database_helper import DatabaseHelper, ERROR_MSG, ErrNo
 from random import random
 
 HALFNHOUR = "datetime('now', '+30 minute')"
@@ -19,22 +19,38 @@ def gentoken():
 def sign_in(email, password):
     response = dbHelper.select("UserID, Password", "Users", "WHERE Username='"+email+"'")
     if not response["success"]:
-        return response
-    userID = response["data"][0][0]
-    response = dbHelper.insert("Tokens", ("Token", "UserID", "ExpireDate"), (gentoken(), userID, HALFNHOUR))
-    return response
+        # This is caused by an error with the query or db. It's not a login fail.
+        return {"success": False, "message": response["message"]}
+    if response["data"][0][1] != password:
+        # response = createjson(("success", "message"), (False, ERROR_MSG[ErrNo.WRONG_PSWD]))
+        return {"success": False, "message": ERROR_MSG[ErrNo.WRONG_PSWD]}
+    token = gentoken()
+    response = dbHelper.insert("Tokens", ("Token", "UserID", "ExpireDate"), (token, response["data"][0][0], HALFNHOUR))
+    if response["success"]:
+        return {"success": True, "message": "Successfully signed in.", "data": token}
+    else:
+        # This is caused by an error with the query or db. It's not a login fail.
+        return {"success": False, "message": response["message"]}
 
 
 def sign_up(email, password, firstname, familyname, gender, city, country):
     response = dbHelper.insert("Users", ("Username", "Password", "FirstName", "FamilyName", "Gender", "City", "Country")
                 , (str(email), str(password), str(firstname), str(familyname), str(gender), str(city), str(country)))
-    if response["errno"] == ErrNo.EX_DATA_ERR:
-        response["message"] = "The e-mail address is already registered"
-    return response
+    if response["success"]:
+        return {"success": True, "message": "Successfully created a new user."}
+    else:
+        if response["errno"] == ErrNo.EX_DATA_ERR:
+            return {"success": False, "message": "User already exists."}
+        else:
+            return {"success": False, "message": response["message"]}
 
 
 def sign_out(token):
-    pass
+    response = dbHelper.delete("Tokens", "Token='"+token+"'")
+    if response["success"]:
+        return {"success": True, "message": "Successfully signed out."}
+    else:
+        return {"success": False, "message": response["message"]}
 
 
 def change_password(token, old_password, new_password):
@@ -78,22 +94,32 @@ def logging():
     if not response["success"]:
         return render_template("client.html", login=False, success=False, msg=response["message"])
     else:
-        return redirect("/account")
+        return redirect("/account/"+response["data"])
 
 
-@app.route("/account", methods=['POST', 'GET'])
-def account():
-    return render_template("client.html", login=True, account=True)
+@app.route("/account/<token>", methods=['POST', 'GET'])
+def account(token=None):
+    return render_template("client.html", login=True, account=True, token=token)
 
 
-@app.route("/home", methods=['POST', 'GET'])
-def home():
-    return render_template("client.html", login=True, home=True)
+@app.route("/home/<token>", methods=['POST', 'GET'])
+def home(token=None):
+    return render_template("client.html", login=True, home=True, token=token)
 
 
-@app.route("/browse", methods=['POST', 'GET'])
-def browse():
-    return render_template("client.html", login=True, browse=True)
+@app.route("/browse/<token>", methods=['POST', 'GET'])
+def browse(token=None):
+    return render_template("client.html", login=True, browse=True, token=token)
+
+
+@app.route("/signout/<token>", methods=['POST', 'GET'])
+def signingout(token=None):
+    response = sign_out(token)
+    if response["success"]:
+        return redirect("/")
+    else:
+        return render_template("client.html", login=True, account=True, token=token, success=False,
+                               msg=response["message"])
 
 
 if __name__ == '__main__':

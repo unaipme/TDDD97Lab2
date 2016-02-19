@@ -5,16 +5,19 @@ from sqlite3 import IntegrityError, OperationalError
 from flask import g
 from enum import Enum
 
+
 class ErrNo(Enum):
     NO_ERROR = -1       # No error
     UNKNOWN = 0         # Unknown error
     QUERY_ERR = 1       # Query not generated properly
     EX_DATA_ERR = 2     # Existing data error
+    WRONG_PSWD = 3      # Wrong password
 
-ERROR_MSG = {ErrNo.EX_DATA_ERR: "The same data already existed in the database",
-             ErrNo.QUERY_ERR: "The query wasn't generated properly",
-             ErrNo.UNKNOWN: "Unknown error occurred",
-             ErrNo.NO_ERROR: "Everything went right"}
+ERROR_MSG = {ErrNo.EX_DATA_ERR: "The same data already existed in the database.",
+             ErrNo.QUERY_ERR: "The query wasn't generated properly.",
+             ErrNo.UNKNOWN: "Unknown error occurred.",
+             ErrNo.NO_ERROR: "Everything went right.",
+             ErrNo.WRONG_PSWD: "Wrong username or password."}
 
 
 def printc(txt):
@@ -27,7 +30,6 @@ def createjson(attnames, values):
         raise AssertionError
     for i in range(0, len(attnames)):
         ret[attnames[i]] = values[i]
-    printc(ret)
     return ret
 
 
@@ -64,7 +66,6 @@ class DatabaseHelper(object):
             sqlst = "SELECT " + str(collist).lstrip("(").rstrip(")") + " FROM " + tablename
             if more != "":
                 sqlst += " " + more
-            printc(sqlst)
             data = c.execute(sqlst).fetchall()
         except IntegrityError:
             c.rollback()
@@ -106,8 +107,34 @@ class DatabaseHelper(object):
             pass
         return resp
 
+    def delete(self, tablename, where='1!=1'):
+        respData = ("success", "message", "errno")
+        c = self.__get_db()
+        try:
+            sqlst = "DELETE FROM " + tablename + " WHERE " + where
+            c.execute(sqlst)
+        except IntegrityError:
+            c.rollback()
+            resp = createjson(respData, (False, ERROR_MSG[ErrNo.EX_DATA_ERR], ErrNo.EX_DATA_ERR))
+        except OperationalError:
+            c.rollback()
+            resp = createjson(respData, (False, ERROR_MSG[ErrNo.QUERY_ERR], ErrNo.QUERY_ERR))
+        except Exception:
+            c.rollback()
+            resp = createjson(respData, (False, ERROR_MSG[ErrNo.UNKNOWN], ErrNo.UNKNOWN))
+        else:
+            c.commit()
+            resp = createjson(respData, (True, ERROR_MSG[ErrNo.NO_ERROR], ErrNo.NO_ERROR))
+        finally:
+            # self.__close()
+            pass
+        return resp
+
     def clean_expired_tokens(self):
         c = self.__get_db()
         c.execute("DELETE FROM Tokens WHERE ExpireDate<=datetime('now')")
         c.commit()
         # self.__close()
+
+    def __exit__(self):
+        self.__close()
