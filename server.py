@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect
-from database_helper import DatabaseHelper, ERROR_MSG, ErrNo
+from database_helper import DatabaseHelper, ERROR_MSG, ErrNo, printc
 from random import random
 
 HALFNHOUR = "datetime('now', '+30 minute')"
@@ -16,21 +16,26 @@ def gentoken():
     return token
 
 
-def sign_in(email, password):
+def checkpassword(email, password):
     response = dbHelper.select("UserID, Password", "Users", "WHERE Username='"+email+"'")
     if not response["success"]:
         # This is caused by an error with the query or db. It's not a login fail.
         return {"success": False, "message": response["message"]}
     if response["data"][0][1] != password:
-        # response = createjson(("success", "message"), (False, ERROR_MSG[ErrNo.WRONG_PSWD]))
         return {"success": False, "message": ERROR_MSG[ErrNo.WRONG_PSWD]}
+    return {"success": True, "user": response["data"][0]}
+
+
+def sign_in(email, password):
+    response = checkpassword(str(email), str(password))
+    if not response["success"]:
+        return response
     token = gentoken()
-    response = dbHelper.insert("Tokens", ("Token", "UserID", "ExpireDate"), (token, response["data"][0][0], HALFNHOUR))
+    response = dbHelper.insert("Tokens", ("Token", "UserID", "ExpireDate"), (token, response["user"][0], HALFNHOUR))
     if response["success"]:
         return {"success": True, "message": "Successfully signed in.", "data": token}
-    else:
-        # This is caused by an error with the query or db. It's not a login fail.
-        return {"success": False, "message": response["message"]}
+    # This is caused by an error with the query or db. It MAY NOT BE a login fail.
+    return {"success": False, "message": response["message"]}
 
 
 def sign_up(email, password, firstname, familyname, gender, city, country):
@@ -38,27 +43,41 @@ def sign_up(email, password, firstname, familyname, gender, city, country):
                 , (str(email), str(password), str(firstname), str(familyname), str(gender), str(city), str(country)))
     if response["success"]:
         return {"success": True, "message": "Successfully created a new user."}
-    else:
-        if response["errno"] == ErrNo.EX_DATA_ERR:
-            return {"success": False, "message": "User already exists."}
-        else:
-            return {"success": False, "message": response["message"]}
+    if response["errno"] == ErrNo.EX_DATA_ERR:
+        return {"success": False, "message": "User already exists."}
+    return {"success": False, "message": response["message"]}
 
 
 def sign_out(token):
     response = dbHelper.delete("Tokens", "Token='"+token+"'")
     if response["success"]:
         return {"success": True, "message": "Successfully signed out."}
-    else:
-        return {"success": False, "message": response["message"]}
+    return {"success": False, "message": response["message"]}
 
 
 def change_password(token, old_password, new_password):
-    pass
+    response = get_user_data_by_token(token)
+    if not response["success"]:
+        return response
+    user_id = response["data"][0]
+    username = response["data"][1]
+    response = checkpassword(username, str(old_password))
+    if not response["success"]:
+        return response
+    response = dbHelper.update("Users", ("Password",), (str(new_password),), "UserID=" + str(user_id))
+    if not response["success"]:
+        return {"success": False, "message": response["message"]}
+    return {"success": True, "message": "Password changed"}
 
 
 def get_user_data_by_token(token):
-    pass
+    response = dbHelper.select("U.*", "Users U", "INNER JOIN Tokens T ON T.UserID = U.UserID")
+    if not response["success"]:
+        return {"success": False, "message": response["message"]}
+    if not response["data"][0]:
+        return {"success": False, "message": "You are not signed in."}
+    return {"success": True, "message": "User data retrieved.", "data": response["data"][0]}
+
 
 
 def get_user_data_by_email(token, email):
@@ -93,13 +112,22 @@ def logging():
     response = sign_in(input["Email"], input["Password"])
     if not response["success"]:
         return render_template("client.html", login=False, success=False, msg=response["message"])
-    else:
-        return redirect("/account/"+response["data"])
+    return redirect("/account/"+response["data"])
 
 
 @app.route("/account/<token>", methods=['POST', 'GET'])
 def account(token=None):
     return render_template("client.html", login=True, account=True, token=token)
+
+
+@app.route("/account/<token>/ps", methods=['POST', 'GET'])
+def pwchange(token=None):
+    input = request.form
+    response = change_password(token, input["CurrentPassword"], input["NewPassword"])
+    if not response["success"]:
+        return render_template("client.html", login=True, account=True, token=token, success=False,
+                               msg=response["message"])
+    return render_template("client.html", login=True, account=True, token=token, success=True, msg=response["message"])
 
 
 @app.route("/home/<token>", methods=['POST', 'GET'])
@@ -117,9 +145,7 @@ def signingout(token=None):
     response = sign_out(token)
     if response["success"]:
         return redirect("/")
-    else:
-        return render_template("client.html", login=True, account=True, token=token, success=False,
-                               msg=response["message"])
+    return render_template("client.html", login=True, account=True, token=token, success=False, msg=response["message"])
 
 
 if __name__ == '__main__':

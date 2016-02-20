@@ -12,12 +12,14 @@ class ErrNo(Enum):
     QUERY_ERR = 1       # Query not generated properly
     EX_DATA_ERR = 2     # Existing data error
     WRONG_PSWD = 3      # Wrong password
+    NOT_EQ_QTY = 4      # Not of equal quantity
 
 ERROR_MSG = {ErrNo.EX_DATA_ERR: "The same data already existed in the database.",
              ErrNo.QUERY_ERR: "The query wasn't generated properly.",
              ErrNo.UNKNOWN: "Unknown error occurred.",
              ErrNo.NO_ERROR: "Everything went right.",
-             ErrNo.WRONG_PSWD: "Wrong username or password."}
+             ErrNo.WRONG_PSWD: "Wrong username or password.",
+             ErrNo.NOT_EQ_QTY: "Both lists must have the same length."}
 
 
 def printc(txt):
@@ -112,6 +114,36 @@ class DatabaseHelper(object):
         c = self.__get_db()
         try:
             sqlst = "DELETE FROM " + tablename + " WHERE " + where
+            c.execute(sqlst)
+        except IntegrityError:
+            c.rollback()
+            resp = createjson(respData, (False, ERROR_MSG[ErrNo.EX_DATA_ERR], ErrNo.EX_DATA_ERR))
+        except OperationalError:
+            c.rollback()
+            resp = createjson(respData, (False, ERROR_MSG[ErrNo.QUERY_ERR], ErrNo.QUERY_ERR))
+        except Exception:
+            c.rollback()
+            resp = createjson(respData, (False, ERROR_MSG[ErrNo.UNKNOWN], ErrNo.UNKNOWN))
+        else:
+            c.commit()
+            resp = createjson(respData, (True, ERROR_MSG[ErrNo.NO_ERROR], ErrNo.NO_ERROR))
+        finally:
+            # self.__close()
+            pass
+        return resp
+
+    def update(self, tablename, collist, valuelist, where='1!=1'):
+        respData = ("success", "message", "errno")
+        c = self.__get_db()
+        try:
+            sqlst = "UPDATE " + tablename + " SET "
+            if len(valuelist) != len(collist):
+                return createjson(respData, (False, ERROR_MSG[ErrNo.NOT_EQ_QTY], ErrNo.NOT_EQ_QTY))
+            for i in range(0, len(collist)):
+                sqlst += collist[i] + "='" + valuelist[i] + "'"
+                if i+1 < len(collist):
+                    sqlst += ", "
+            sqlst += " WHERE " + where
             c.execute(sqlst)
         except IntegrityError:
             c.rollback()

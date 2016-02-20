@@ -89,8 +89,7 @@
                 {% if account %}
                 <div id="AccountPanel" class="panel shown">
                     <h3>Change password</h3>
-                    <form id="NewPasswordForm" method="post" action="/account/{{token}}">
-                        <input type="hidden" name="Token" value="{{token}}" />
+                    <form id="NewPasswordForm" method="post" action="/account/{{token}}/ps">
                         <table class="padded">
                             <tr>
                                 <td>Current password:</td>
