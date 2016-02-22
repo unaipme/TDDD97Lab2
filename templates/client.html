@@ -5,8 +5,8 @@
 		<script src="{{url_for('static', filename='client.js')}}" type="text/javascript"></script>
 	</head>
     <body>
-    {% if login == False %}
         <center>
+        {% if login == False %}
             <div id="Welcome">
                 <div id="LogoSlogan" class="container">
                     <img src="{{url_for('static', filename='wimage.png')}}">
@@ -77,9 +77,7 @@
                     </form>
                 </div>
             </div>
-        </center>
-    {% else %}
-        <center>
+        {% else %}
             <div id="TabContainer">
                 <a href="/account/{{token}}"><div id="AccountTab" class="tab {% if account %}selected{% endif %}">Account</div></a>
                 <a href="/home/{{token}}"><div id="HomeTab" class="tab {% if home %}selected{% endif %}">Home</div></a>
@@ -117,15 +115,15 @@
                 <div id="HomePanel" class="panel">
                     <table id="UserInfoTable" class="padded">
                         <tr>
-                            <td><b>Name:</b> <span id="FirstNameS"></span> <span id="FamilyNameS"></span></td>
-                            <td><b>Gender:</b> <span id="GenderS"></span></td>
+                            <td><b>Name:</b>{{firstname}}<span id="FirstNameS"></span> <span id="FamilyNameS">{{familyname}}</span></td>
+                            <td><b>Gender:</b> <span id="GenderS">{{gender}}</span></td>
                         </tr>
                         <tr>
-                            <td><b>City:</b> <span id="CityS"></span></td>
-                            <td><b>Country:</b> <span id="CountryS"></span></td>
+                            <td><b>City:</b> <span id="CityS">{{city}}</span></td>
+                            <td><b>Country:</b> <span id="CountryS">{{country}}</span></td>
                         </tr>
                         <tr>
-                            <td colspan="2"><b>Email:</b> <span id="EmailS"></span></td>
+                            <td colspan="2"><b>Email:</b> <span id="EmailS">{{email}}</span></td>
                         </tr>
                     </table>
                     <hr />
@@ -174,6 +172,7 @@
                 </div>
                 {% endif %}
             </div>
+            {% endif %}
             <div id="ErrorDisplay" class="container display">{{msg}}</div>
             <div id="SuccessDisplay" class="container display">{{msg}}</div>
             {% if success == False %}
@@ -187,7 +186,6 @@
             setTimeout(function() {document.getElementById("SuccessDisplay").style.display = "none";}, 7000);
             </script>
             {% endif %}
-        </center>
-        {% endif %}
+            </center>
     </body>
 </html>

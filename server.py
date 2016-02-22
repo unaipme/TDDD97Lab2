@@ -71,7 +71,8 @@ def change_password(token, old_password, new_password):
 
 
 def get_user_data_by_token(token):
-    response = dbHelper.select("U.*", "Users U", "INNER JOIN Tokens T ON T.UserID = U.UserID")
+    response = dbHelper.select("U.Username, U.FirstName, U.FamilyName, U.City, U.Country, G.Name", "Users U",
+                               "INNER JOIN Tokens T ON T.UserID = U.UserID INNER JOIN Genders G ON G.GenderID = U.Gender")
     if not response["success"]:
         return {"success": False, "message": response["message"]}
     if not response["data"][0]:
@@ -132,7 +133,12 @@ def pwchange(token=None):
 
 @app.route("/home/<token>", methods=['POST', 'GET'])
 def home(token=None):
-    return render_template("client.html", login=True, home=True, token=token)
+    response = get_user_data_by_token(token)
+    if not response["success"]:
+        return render_template("client.html", login=True, home=True, token=token, success=False, msg=response["message"])
+    user = response["data"]
+    return render_template("client.html", login=True, home=True, token=token, email=user[0], firstname=user[1],
+                           familyname=user[2], city=user[3], country=user[4], gender=user[5])
 
 
 @app.route("/browse/<token>", methods=['POST', 'GET'])
