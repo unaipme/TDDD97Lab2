@@ -26,6 +26,14 @@ def checkpassword(email, password):
     return {"success": True, "user": response["data"][0]}
 
 
+def convert_to_wall(msgs):
+    response = ""
+    for i in range(0, len(msgs)):
+        response += "<div class='UserPost'><span class='PosterName'>" + msgs[i][0] + "</span>"
+        response += " <span class='MessageBody'>" + msgs[i][1] + "</span></div>"
+    return response
+
+
 def sign_in(email, password):
     response = checkpassword(str(email), str(password))
     if not response["success"]:
@@ -71,14 +79,13 @@ def change_password(token, old_password, new_password):
 
 
 def get_user_data_by_token(token):
-    response = dbHelper.select("U.Username, U.FirstName, U.FamilyName, U.City, U.Country, G.Name", "Users U",
+    response = dbHelper.select("U.Username, U.FirstName, U.FamilyName, U.City, U.Country, G.Name, U.UserID", "Users U",
                                "INNER JOIN Tokens T ON T.UserID = U.UserID INNER JOIN Genders G ON G.GenderID = U.Gender")
     if not response["success"]:
         return {"success": False, "message": response["message"]}
     if not response["data"][0]:
         return {"success": False, "message": "You are not signed in."}
     return {"success": True, "message": "User data retrieved.", "data": response["data"][0]}
-
 
 
 def get_user_data_by_email(token, email):
@@ -132,13 +139,20 @@ def pwchange(token=None):
 
 
 @app.route("/home/<token>", methods=['POST', 'GET'])
-def home(token=None):
+def home(token=None, success=None, msg=None):
     response = get_user_data_by_token(token)
     if not response["success"]:
         return render_template("client.html", login=True, home=True, token=token, success=False, msg=response["message"])
     user = response["data"]
+    response = dbHelper.select("S.Username, M.MsgText", "Messages M", "INNER JOIN Users S ON S.UserID=M.SenderID " +
+                               "WHERE M.ReceiverID=" + str(user[6]) +" ORDER BY M.MessageID DESC")
+    if not response["success"]:
+        return render_template("client.html", login=True, home=True, token=token, success=False, msg=response["message"])
+    msgs = response["data"]
+    wallmsg = convert_to_wall(msgs)
     return render_template("client.html", login=True, home=True, token=token, email=user[0], firstname=user[1],
-                           familyname=user[2], city=user[3], country=user[4], gender=user[5])
+                           familyname=user[2], city=user[3], country=user[4], gender=user[5], wallmsg=wallmsg,
+                           success=success, msg=msg)
 
 
 @app.route("/browse/<token>", methods=['POST', 'GET'])
@@ -153,6 +167,18 @@ def signingout(token=None):
         return redirect("/")
     return render_template("client.html", login=True, account=True, token=token, success=False, msg=response["message"])
 
+
+@app.route("/send/<token>/own", methods=['POST', 'GET'])
+def post_on_own_wall(token=None):
+    msg = str(request.form["MsgText"])
+    response = get_user_data_by_token(token)
+    if not response["success"]:
+        return home(token=token, success=False, msg=response["message"])
+    userID = int(response["data"][6])
+    response = dbHelper.insert("Messages", "(SenderID, ReceiverID, MsgText)", (userID, userID, msg))
+    if not response["success"]:
+        return home(token=token, success=False, msg=response["message"])
+    return redirect("/home/"+token)
 
 if __name__ == '__main__':
     app.debug = True

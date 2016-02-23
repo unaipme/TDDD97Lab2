@@ -115,7 +115,7 @@
                 <div id="HomePanel" class="panel">
                     <table id="UserInfoTable" class="padded">
                         <tr>
-                            <td><b>Name:</b>{{firstname}}<span id="FirstNameS"></span> <span id="FamilyNameS">{{familyname}}</span></td>
+                            <td><b>Name:</b> <span id="FirstNameS">{{firstname}}</span> <span id="FamilyNameS">{{familyname}}</span></td>
                             <td><b>Gender:</b> <span id="GenderS">{{gender}}</span></td>
                         </tr>
                         <tr>
@@ -127,17 +127,19 @@
                         </tr>
                     </table>
                     <hr />
-                    <table>
-                        <tr>
-                            <td><textarea rows="4" cols="80" maxlength="140" placeholder="Write your post here" id="MessageContent"></textarea></td>
-                        </tr>
-                        <tr>
-                            <td><button onClick="postOnWall(loggedUser)">Post</button></td>
-                        </tr>
-                    </table>
+                    <form action="/send/{{token}}/own" method="post">
+                        <table>
+                            <tr>
+                                <td><textarea name="MsgText" rows="4" cols="80" maxlength="140" placeholder="Write your post here" id="MessageContent"></textarea></td>
+                            </tr>
+                            <tr>
+                                <td><button onClick="postOnWall(loggedUser)">Post</button></td>
+                            </tr>
+                        </table>
+                    </form>
                     <hr />
-                    <div id="PostShowcase" class="postshowcase"></div>
-                    <button onClick="refreshMessageWall()">Refresh wall</button>
+                    <div id="PostShowcase" class="postshowcase">{{ wallmsg|safe }}</div>
+                    <button onClick="location.reload()">Refresh wall</button>
                 </div>
                 {% endif %}
                 {% if browse %}
