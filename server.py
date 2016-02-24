@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect
-from database_helper import DatabaseHelper, ERROR_MSG, ErrNo, printc
+from database_helper import DatabaseHelper, ERROR_MSG, ErrNo
 from random import random
 
 
@@ -80,7 +80,8 @@ def change_password(token, old_password, new_password):
 
 def get_user_data_by_token(token):
     response = dbHelper.select("U.Username, U.FirstName, U.FamilyName, U.City, U.Country, G.Name, U.UserID", "Users U",
-                               "INNER JOIN Tokens T ON T.UserID = U.UserID INNER JOIN Genders G ON G.GenderID = U.Gender")
+                               "INNER JOIN Tokens T ON T.UserID=U.UserID INNER JOIN Genders G ON G.GenderID=U.Gender " +
+                               "WHERE T.Token='" + token + "'")
     if not response["success"]:
         return {"success": False, "message": response["message"]}
     if not response["data"][0]:
@@ -89,15 +90,53 @@ def get_user_data_by_token(token):
 
 
 def get_user_data_by_email(token, email):
-    pass
+    response = get_user_data_by_token(token)
+    if not response["success"]:
+        return response
+    response = dbHelper.select("U.Username, U.FirstName, U.FamilyName, U.City, U.Country, G.Name, U.UserID",
+                               "Users U", "INNER JOIN Genders G ON G.GenderID=U.Gender WHERE U.Username='" + email + "'")
+    if not response["success"]:
+        return {"success": False, "message": response["message"]}
+    if response == []:
+        return {"success": False, "message": "No such user exists."}
+    return {"success": True, "message": "User data retrieved.", "data": response["data"][0]}
 
 
 def get_user_messages_by_email(token, email):
-    pass
+    response = get_user_data_by_token(token)
+    if not response["success"]:
+        return response
+    response = get_user_data_by_email(token, email)
+    if not response["success"]:
+        return response
+    userID = response["data"][6]
+    response = dbHelper.select("S.Username, M.MsgText", "Messages M", "INNER JOIN Users S ON S.UserID=M.SenderID " +
+                               "WHERE M.ReceiverID=" + str(userID) +" ORDER BY M.MessageID DESC")
+    if not response["success"]:
+        return {"success": False, "message": response["message"]}
+    return {"success": True, "message": "User data retrieved.", "data": response["data"]}
 
 
-def post_message(token, message, email):
-    pass
+def post_message(token, message, email=None):
+    response = get_user_data_by_token(token)
+    if not response["success"]:
+        return response
+    senderID = response["data"][6]
+    if not email is None:
+        response = get_user_data_by_email(token, email)
+        if not response["success"]:
+            return response
+        receiverID = response["data"][6]
+    else:
+        # if email is none it means that the sender and the receiver are the same user
+        response = get_user_data_by_token(token)
+        if not response["success"]:
+            return response
+        receiverID = response["data"][6]
+    response = dbHelper.insert("Messages", "(SenderID, ReceiverID, MsgText)", (senderID, receiverID, message))
+    if not response["success"]:
+        return {"success": False, "message": response["message"]}
+    return {"success": True, "message": "Message posted."}
 
 
 @app.route("/")
@@ -108,16 +147,16 @@ def main_func():
 
 @app.route("/signup", methods=['POST'])
 def signup_display():
-    input = request.form
-    response = sign_up(input["Email"], input["Password"], input["FirstName"], input["FamilyName"],
-                       input["Gender"], input["City"], input["Country"])
+    inputs = request.form
+    response = sign_up(inputs["Email"], inputs["Password"], inputs["FirstName"], inputs["FamilyName"],
+                       inputs["Gender"], inputs["City"], inputs["Country"])
     return render_template("client.html", login=False, success=response["success"], msg=response["message"])
 
 
 @app.route("/login", methods=['POST'])
 def logging():
-    input = request.form
-    response = sign_in(input["Email"], input["Password"])
+    inputs = request.form
+    response = sign_in(inputs["Email"], inputs["Password"])
     if not response["success"]:
         return render_template("client.html", login=False, success=False, msg=response["message"])
     return redirect("/account/"+response["data"])
@@ -130,8 +169,8 @@ def account(token=None):
 
 @app.route("/account/<token>/ps", methods=['POST', 'GET'])
 def pwchange(token=None):
-    input = request.form
-    response = change_password(token, input["CurrentPassword"], input["NewPassword"])
+    inputs = request.form
+    response = change_password(token, inputs["CurrentPassword"], inputs["NewPassword"])
     if not response["success"]:
         return render_template("client.html", login=True, account=True, token=token, success=False,
                                msg=response["message"])
@@ -144,12 +183,10 @@ def home(token=None, success=None, msg=None):
     if not response["success"]:
         return render_template("client.html", login=True, home=True, token=token, success=False, msg=response["message"])
     user = response["data"]
-    response = dbHelper.select("S.Username, M.MsgText", "Messages M", "INNER JOIN Users S ON S.UserID=M.SenderID " +
-                               "WHERE M.ReceiverID=" + str(user[6]) +" ORDER BY M.MessageID DESC")
+    response = get_user_messages_by_email(token, user[0])
     if not response["success"]:
         return render_template("client.html", login=True, home=True, token=token, success=False, msg=response["message"])
-    msgs = response["data"]
-    wallmsg = convert_to_wall(msgs)
+    wallmsg = convert_to_wall(response["data"])
     return render_template("client.html", login=True, home=True, token=token, email=user[0], firstname=user[1],
                            familyname=user[2], city=user[3], country=user[4], gender=user[5], wallmsg=wallmsg,
                            success=success, msg=msg)
@@ -158,6 +195,31 @@ def home(token=None, success=None, msg=None):
 @app.route("/browse/<token>", methods=['POST', 'GET'])
 def browse(token=None):
     return render_template("client.html", login=True, browse=True, token=token)
+
+
+@app.route("/browse/<token>/s", methods=["POST", "GET"])
+def browse_user_info(token=None, email=None):
+    if email is None:
+        email = request.form["SearchTerm"]
+    response = get_user_data_by_email(token, email)
+    if not response["success"]:
+        return render_template("client.html", login=True, browse=True, token=token, success=False, msg=response["message"])
+    user = response["data"]
+    response = get_user_messages_by_email(token, user[0])
+    if not response["success"]:
+        return render_template("client.html", login=True, browse=True, token=token, success=False, msg=response["message"])
+    wallmsg = convert_to_wall(response["data"])
+    return render_template("client.html", login=True, browse=True, token=token, email=user[0], firstname=user[1],
+                           familyname=user[2], city=user[3], country=user[4], gender=user[5], wallmsg=wallmsg)
+
+
+@app.route("/browse/<token>/p", methods=["POST", "GET"])
+def browse_post(token=None):
+    inputs = request.form
+    response = post_message(token, str(inputs["MsgText"]), inputs["Receiver"])
+    if not response["success"]:
+        return render_template("client.html", login=True, browse=True, token=token, success=False, msg=response["message"])
+    return browse_user_info(token, str(inputs["Receiver"]))
 
 
 @app.route("/signout/<token>", methods=['POST', 'GET'])
@@ -171,11 +233,7 @@ def signingout(token=None):
 @app.route("/send/<token>/own", methods=['POST', 'GET'])
 def post_on_own_wall(token=None):
     msg = str(request.form["MsgText"])
-    response = get_user_data_by_token(token)
-    if not response["success"]:
-        return home(token=token, success=False, msg=response["message"])
-    userID = int(response["data"][6])
-    response = dbHelper.insert("Messages", "(SenderID, ReceiverID, MsgText)", (userID, userID, msg))
+    response = post_message(token, msg)
     if not response["success"]:
         return home(token=token, success=False, msg=response["message"])
     return redirect("/home/"+token)

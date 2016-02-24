@@ -91,6 +91,7 @@ class DatabaseHelper(object):
         respData = ("success", "message", "errno")
         try:
             sqlst = "INSERT INTO " + tablename + " " + str(collist) + " VALUES " + str(valuelist)
+            printc(sqlst)
             c.execute(sqlst)
         except IntegrityError:
             c.rollback()

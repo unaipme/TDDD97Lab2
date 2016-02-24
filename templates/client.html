@@ -145,33 +145,38 @@
                 {% endif %}
                 {% if browse %}
                 <div id="BrowsePanel" class="panel">
-                    <input type="email" name="SearchTerm" id="SearchTerm" /> <button id="SearchButton" onClick="searchUser()">Load user</button>
+                    <form action="/browse/{{token}}/s" method="POST">
+                        <input type="email" name="SearchTerm" id="SearchTerm" /> <input type="submit" value="Load user" />
+                    </form>
                     <hr />
                     <table id="OUserInfoTable" class="padded fixedsizetable">
                         <tr>
-                            <td><b>Name:</b> <span id="OFirstNameS"></span> <span id="OFamilyNameS"></span></td>
-                            <td><b>Gender:</b> <span id="OGenderS"></span></td>
+                            <td><b>Name:</b> <span id="OFirstNameS">{{firstname}}</span> <span id="OFamilyNameS">{{familyname}}</span></td>
+                            <td><b>Gender:</b> <span id="OGenderS">{{gender}}</span></td>
                         </tr>
                         <tr>
-                            <td><b>City:</b> <span id="OCityS"></span></td>
-                            <td><b>Country:</b> <span id="OCountryS"></span></td>
+                            <td><b>City:</b> <span id="OCityS">{{city}}</span></td>
+                            <td><b>Country:</b> <span id="OCountryS">{{country}}</span></td>
                         </tr>
                         <tr>
-                            <td colspan="2"><b>Email:</b> <span id="OEmailS"></span></td>
+                            <td colspan="2"><b>Email:</b> <span id="OEmailS">{{email}}</span></td>
                         </tr>
                     </table>
                     <hr />
                     <table>
-                        <tr>
-                            <td><textarea rows="4" cols="80" maxlength="140" placeholder="Write your post here" id="OMessageContent"></textarea></td>
-                        </tr>
-                        <tr>
-                            <td><button onClick="postOnWall(browseUser, true)">Post</button></td>
-                        </tr>
+                        <form action="/browse/{{token}}/p" method="POST">
+                            <input type="hidden" name="Receiver" value="{{email}}" />
+                            <tr>
+                                <td><textarea name="MsgText" rows="4" cols="80" maxlength="140" placeholder="Write your post here" id="OMessageContent"></textarea></td>
+                            </tr>
+                            <tr>
+                                <td><input type="submit" value="Post" /></td>
+                            </tr>
+                        </form>
                     </table>
                     <hr />
-                    <div id="OPostShowcase" class="postshowcase"></div>
-                    <button onClick="refreshMessageWall(true, browseUser)">Refresh wall</button>
+                    <div id="OPostShowcase" class="postshowcase">{{ wallmsg|safe }}</div>
+                    <button onClick="location.reload()">Refresh wall</button>
                 </div>
                 {% endif %}
             </div>
