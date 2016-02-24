@@ -1,7 +1,16 @@
 const minPSWChars = 8;
 
+window.onload = function() {
+    $("input[type=text],input[type=email],input[type=password],textarea").on("blur", function(e) {
+        var el = e.target;
+        if (el.value.indexOf("'") > -1 || el.value.indexOf("\"") > -1) {
+            addToErrorDisplay("You can't use neither of these characters: ' \"");
+            el.value = "";
+        }
+    });
+}
+
 function passwordValidation(pswID, rpswID) {
-    console.log("Comprobando...");
 	var psw = document.getElementById(pswID).value;
 	var rpsw = document.getElementById(rpswID).value;
 	
@@ -9,23 +18,6 @@ function passwordValidation(pswID, rpswID) {
 	if (!ret) addToErrorDisplay("The password must be at least 8 characters long, or it wasn\'t correctly copied.");
 	
 	return ret;
-}
-
-function postOnWall(user, search) {
-	if (search) var txt = document.getElementById("OMessageContent").value;
-	else var txt = document.getElementById("MessageContent").value;
-	if (txt == "") {
-		addToErrorDisplay("The posts can't be empty");
-		return;
-	}
-	document.getElementById("MessageContent").value = "";
-	var resp = serverstub.postMessage(token, txt, user.email);
-	if (!resp.success) addToErrorDisplay(resp.message);
-	else {
-		addToSuccessDisplay(resp.message);
-		refreshMessageWall(search, user);
-	}
-	return resp.success;
 }
 
 function createMessageElement(txt, author) {
@@ -43,7 +35,6 @@ function createMessageElement(txt, author) {
 }
 
 function addToErrorDisplay(txt) {
-	console.log(txt);
 	var err = document.getElementById("ErrorDisplay");
 	err.innerHTML = txt;
 	err.style.display = "initial";
@@ -51,7 +42,6 @@ function addToErrorDisplay(txt) {
 }
 
 function addToSuccessDisplay(txt) {
-	console.log(txt);
 	var succ = document.getElementById("SuccessDisplay");
 	succ.innerHTML = txt;
 	succ.style.display = "initial";

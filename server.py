@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect
 from database_helper import DatabaseHelper, ERROR_MSG, ErrNo, printc
 from random import random
 
+
 HALFNHOUR = "datetime('now', '+30 minute')"
 app = Flask(__name__)
 with app.app_context():
@@ -11,7 +12,7 @@ with app.app_context():
 def gentoken():
     token = ""
     letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    for i in range(0, len(letters)):
+    for i in range(len(letters)):
         token += letters[int(random() * len(letters))]
     return token
 
@@ -29,8 +30,7 @@ def checkpassword(email, password):
 def convert_to_wall(msgs):
     response = ""
     for i in range(0, len(msgs)):
-        response += "<div class='UserPost'><span class='PosterName'>" + msgs[i][0] + "</span>"
-        response += " <span class='MessageBody'>" + msgs[i][1] + "</span></div>"
+        response += render_template("message.html", author=msgs[i][0], txt=msgs[i][1])
     return response
 
 
